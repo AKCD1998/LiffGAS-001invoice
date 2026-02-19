@@ -349,7 +349,39 @@ export async function adminLogin(payload) {
       fallbackMessage: "ยังไม่ตั้งค่า GAS_WEBAPP_URL",
     });
   }
-  return postJson("adminLogin", payload);
+  const body = payload && typeof payload === "object" ? payload : {};
+  const lineUserId = String(body.lineUserId || "").trim();
+  const googleIdToken = String(body.googleIdToken || "").trim();
+
+  try {
+    return await postJson("adminLogin", body);
+  } catch (error) {
+    // Fallback for environments where Apps Script POST preflight is blocked.
+    const canFallback =
+      !!lineUserId &&
+      !!googleIdToken &&
+      error &&
+      typeof error === "object" &&
+      String(error.message || "").toLowerCase().indexOf("failed to fetch") >= 0;
+
+    if (!canFallback) {
+      throw error;
+    }
+
+    const me = await getJson("adminMe", {
+      lineUserId: lineUserId,
+      googleIdToken: googleIdToken,
+    });
+
+    return {
+      isAdmin: !!me.isAdmin,
+      role: String(me.role || "admin").trim() || "admin",
+      email: String(me.email || "").trim(),
+      name: "",
+      picture: "",
+      viaFallback: true,
+    };
+  }
 }
 
 export async function adminMe(lineUserId, googleIdToken) {
