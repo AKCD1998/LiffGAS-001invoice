@@ -237,11 +237,10 @@ async function postJson(path, payload) {
     });
   }
 
+  // Apps Script Web App does not handle CORS preflight reliably.
+  // Send POST as a simple request (no custom headers) to avoid OPTIONS.
   const response = await fetch(endpointUrl(path), {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(payload || {}),
   });
 
