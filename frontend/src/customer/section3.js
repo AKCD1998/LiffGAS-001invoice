@@ -1,4 +1,5 @@
 import { getErrorDisplayText, saveSection } from "../api.js";
+import { ensureLoadingOverlay, hideLoading, showLoading } from "./uiLoading.js";
 
 function textValue(form, fieldId) {
   const input = form.querySelector(`[name="${fieldId}"]`);
@@ -119,6 +120,7 @@ export function renderCustomerSection3(options) {
   const paymentMethodErrorEl = rootEl.querySelector("#paymentMethodError");
   const totalAmountInputEl = rootEl.querySelector('[name="totalAmount"]');
   const paymentNotesInputEl = rootEl.querySelector('[name="paymentNotes"]');
+  ensureLoadingOverlay(rootEl);
 
   let saving = false;
 
@@ -185,6 +187,11 @@ export function renderCustomerSection3(options) {
   function setSavingState(isSaving) {
     saving = isSaving;
     nextButtonEl.textContent = isSaving ? "กำลังบันทึก..." : "ถัดไป";
+    if (isSaving) {
+      showLoading(rootEl, "กำลังบันทึก...");
+    } else {
+      hideLoading(rootEl);
+    }
     renderValidation();
   }
 

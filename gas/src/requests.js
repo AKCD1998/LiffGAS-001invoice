@@ -42,6 +42,15 @@ const REQUEST_NUMBER_FIELD_MAP_ = Object.freeze({
   totalAmount: true,
 });
 
+const REQUEST_FORCE_TEXT_FIELD_MAP_ = Object.freeze({
+  requestId: true,
+  lineUserId: true,
+  taxId13: true,
+  officePhone: true,
+  contactPhone: true,
+  contactLineId: true,
+});
+
 const VALID_REQUEST_SECTIONS_ = Object.freeze([1, 2, 3, 5]);
 const REQUEST_TEXT_MAX_LENGTH_MAP_ = Object.freeze({
   officeName: 200,
@@ -251,6 +260,7 @@ function upsertRequest_(params) {
   if (!rowObject.taxId_verify_status) {
     rowObject.taxId_verify_status = "not_checked";
   }
+  coerceRequestTextFields_(rowObject);
 
   const partialUpdate = applyPartialUpdate_(rowObject, section, data);
   if ((partialUpdate.truncatedFields || []).length > 0) {
@@ -269,7 +279,9 @@ function upsertRequest_(params) {
   rowObject.status = progress.progress_percent === 100 ? "ready" : "draft";
   rowObject.updatedAt = nowIso;
 
-  const rowValues = headers.map((header) => valueForSheetCell_(rowObject[header]));
+  const rowValues = headers.map((header) =>
+    valueForSheetCell_(header, rowObject[header]),
+  );
   let targetRowNumber = 0;
   if (existingRow) {
     targetRowNumber = existingRow.rowNumber;
@@ -447,6 +459,10 @@ function normalizeDraftValue_(field, value) {
     return value.toISOString();
   }
 
+  if (REQUEST_FORCE_TEXT_FIELD_MAP_[field]) {
+    return String(value).trim();
+  }
+
   if (typeof value === "string") {
     return value;
   }
@@ -546,6 +562,9 @@ function normalizeFieldValue_(field, value) {
       rawText = String(value);
     }
   }
+  if (REQUEST_FORCE_TEXT_FIELD_MAP_[field]) {
+    rawText = String(rawText);
+  }
   const maxLength =
     REQUEST_TEXT_MAX_LENGTH_MAP_[field] || REQUEST_MAX_DEFAULT_TEXT_LENGTH_;
   return clampText_(rawText, maxLength);
@@ -634,11 +653,33 @@ function uniqueList_(items) {
   return result;
 }
 
-function valueForSheetCell_(value) {
+function valueForSheetCell_(field, value) {
   if (value === null || typeof value === "undefined") {
     return "";
   }
+  if (REQUEST_FORCE_TEXT_FIELD_MAP_[field]) {
+    const text = String(value).trim().replace(/^'+/, "");
+    if (!text) {
+      return "";
+    }
+    // Prefix apostrophe to preserve leading zero in Google Sheets.
+    return `'${text}`;
+  }
   return value;
+}
+
+function coerceRequestTextFields_(rowObject) {
+  Object.keys(REQUEST_FORCE_TEXT_FIELD_MAP_).forEach((field) => {
+    if (!Object.prototype.hasOwnProperty.call(rowObject, field)) {
+      return;
+    }
+    const value = rowObject[field];
+    if (value === null || typeof value === "undefined") {
+      rowObject[field] = "";
+      return;
+    }
+    rowObject[field] = String(value).trim().replace(/^'+/, "");
+  });
 }
 
 function createRequestError_(status, code, message) {

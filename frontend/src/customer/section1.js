@@ -1,4 +1,6 @@
 import { getErrorDisplayText, saveSection } from "../api.js";
+import { asPhoneString } from "../utils/phone.js";
+import { ensureLoadingOverlay, hideLoading, showLoading } from "./uiLoading.js";
 
 export function isValidThaiTaxId13(taxId13) {
   const normalized = String(taxId13 || "").trim();
@@ -89,6 +91,7 @@ export function renderCustomerSection1(options) {
   const warningEl = rootEl.querySelector("#section1-warning");
   const successEl = rootEl.querySelector("#section1-success");
   const errorEl = rootEl.querySelector("#section1-error");
+  ensureLoadingOverlay(rootEl);
 
   let taxIdTouched = false;
   let saving = false;
@@ -114,7 +117,7 @@ export function renderCustomerSection1(options) {
   officeNameInputEl.value = String(initialData.officeName || "");
   taxInvoiceAddressInputEl.value = String(initialData.taxInvoiceAddress || "");
   taxIdInputEl.value = String(initialData.taxId13 || "").replace(/\D/g, "").slice(0, 13);
-  officePhoneInputEl.value = String(initialData.officePhone || "");
+  officePhoneInputEl.value = asPhoneString(initialData.officePhone, "officePhone");
   taxIdTouched = taxIdInputEl.value !== "";
 
   if (initialNotice) {
@@ -125,7 +128,10 @@ export function renderCustomerSection1(options) {
     const officeName = fieldValueById(formEl, "officeName");
     const taxInvoiceAddress = fieldValueById(formEl, "taxInvoiceAddress");
     const taxId13 = fieldValueById(formEl, "taxId13");
-    const officePhone = fieldValueById(formEl, "officePhone");
+    const officePhone = asPhoneString(
+      fieldValueById(formEl, "officePhone"),
+      "officePhone",
+    );
     const taxValidation = getTaxIdValidation(taxId13);
     const allRequiredFilled =
       officeName !== "" &&
@@ -172,6 +178,11 @@ export function renderCustomerSection1(options) {
   function setSavingState(isSaving) {
     saving = isSaving;
     nextButtonEl.textContent = isSaving ? "กำลังบันทึก..." : "ถัดไป";
+    if (isSaving) {
+      showLoading(rootEl, "กำลังบันทึก...");
+    } else {
+      hideLoading(rootEl);
+    }
     renderValidationState();
   }
 

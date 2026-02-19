@@ -1,3 +1,5 @@
+import { asPhoneString, sanitizeTelHref } from "../utils/phone.js";
+
 function escapeHtml(value) {
   const raw = String(value ?? "");
   return raw
@@ -48,6 +50,20 @@ function progressText(draft) {
   return `${escapeHtml(progress)}%`;
 }
 
+function phoneSummaryHtml(value, fieldName) {
+  const rawPhone = asPhoneString(value, fieldName);
+  if (!rawPhone) {
+    return "-";
+  }
+
+  const telHref = sanitizeTelHref(rawPhone);
+  if (!telHref) {
+    return escapeHtml(rawPhone);
+  }
+
+  return `<a href="tel:${escapeHtml(telHref)}">${escapeHtml(rawPhone)}</a>`;
+}
+
 export function renderCustomerSummary(options) {
   const rootEl = options.rootEl;
   const draft =
@@ -80,7 +96,10 @@ export function renderCustomerSummary(options) {
         <p><strong>ชื่อสำนักงาน:</strong> ${displayValue(draft.officeName)}</p>
         <p><strong>ที่อยู่:</strong> ${displayValue(draft.taxInvoiceAddress)}</p>
         <p><strong>เลขผู้เสียภาษี:</strong> ${displayValue(draft.taxId13)}</p>
-        <p><strong>เบอร์โทรสำนักงาน:</strong> ${displayValue(draft.officePhone)}</p>
+        <p><strong>เบอร์โทรสำนักงาน:</strong> ${phoneSummaryHtml(
+          draft.officePhone,
+          "officePhone",
+        )}</p>
       </div>
 
       <div class="summary-block">
@@ -98,7 +117,10 @@ export function renderCustomerSummary(options) {
       <div class="summary-block">
         <h2>ส่วนที่ 5</h2>
         <p><strong>ไลน์ ID:</strong> ${displayValue(draft.contactLineId)}</p>
-        <p><strong>เบอร์โทรศัพท์:</strong> ${displayValue(draft.contactPhone)}</p>
+        <p><strong>เบอร์โทรศัพท์:</strong> ${phoneSummaryHtml(
+          draft.contactPhone,
+          "contactPhone",
+        )}</p>
       </div>
 
       <div class="summary-block">

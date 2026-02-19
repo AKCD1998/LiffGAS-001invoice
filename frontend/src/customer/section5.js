@@ -1,4 +1,6 @@
 import { getErrorDisplayText, saveSection } from "../api.js";
+import { asPhoneString } from "../utils/phone.js";
+import { ensureLoadingOverlay, hideLoading, showLoading } from "./uiLoading.js";
 
 function textValue(form, fieldId) {
   const input = form.querySelector(`[name="${fieldId}"]`);
@@ -60,9 +62,10 @@ export function renderCustomerSection5(options) {
   const contactErrorEl = rootEl.querySelector("#contactError");
   const contactLineIdEl = rootEl.querySelector('[name="contactLineId"]');
   const contactPhoneEl = rootEl.querySelector('[name="contactPhone"]');
+  ensureLoadingOverlay(rootEl);
 
   contactLineIdEl.value = String(initialData.contactLineId || "");
-  contactPhoneEl.value = String(initialData.contactPhone || "");
+  contactPhoneEl.value = asPhoneString(initialData.contactPhone, "contactPhone");
 
   let saving = false;
 
@@ -87,7 +90,10 @@ export function renderCustomerSection5(options) {
 
   function collectState() {
     const contactLineId = textValue(formEl, "contactLineId");
-    const contactPhone = textValue(formEl, "contactPhone");
+    const contactPhone = asPhoneString(
+      textValue(formEl, "contactPhone"),
+      "contactPhone",
+    );
     const hasAnyContact = contactLineId !== "" || contactPhone !== "";
     return {
       contactLineId,
@@ -108,6 +114,11 @@ export function renderCustomerSection5(options) {
   function setSavingState(isSaving) {
     saving = isSaving;
     nextButtonEl.textContent = isSaving ? "กำลังบันทึก..." : "บันทึกและจบ";
+    if (isSaving) {
+      showLoading(rootEl, "กำลังบันทึก...");
+    } else {
+      hideLoading(rootEl);
+    }
     renderValidation();
   }
 

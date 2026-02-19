@@ -1,4 +1,5 @@
 import { getErrorDisplayText, saveSection } from "../api.js";
+import { ensureLoadingOverlay, hideLoading, showLoading } from "./uiLoading.js";
 
 function checkboxValue(form, fieldId) {
   const input = form.querySelector(`[name="${fieldId}"]`);
@@ -38,7 +39,7 @@ export function renderCustomerSection2(options) {
       : {};
 
   rootEl.innerHTML = `
-    <main class="card">
+    <main class="card section2-card">
       <h1 class="title">ประเภทเอกสารที่ต้องการ (ส่วนที่ 2)</h1>
       <p class="subtitle">เลือกเอกสารที่ต้องการอย่างน้อย 1 รายการ</p>
 
@@ -46,54 +47,90 @@ export function renderCustomerSection2(options) {
       <div id="section2-success" class="banner banner-success hidden"></div>
       <div id="section2-error" class="banner banner-error hidden"></div>
 
-      <form id="section2-form" class="form-grid" novalidate>
+      <form id="section2-form" class="form-grid section2-form" novalidate>
         <p id="section2-selection-error" class="input-hint input-hint-error"></p>
 
-        <div class="option-block">
+        <div class="option-block section2-option-block">
           <label class="checkbox-label">
             <input type="checkbox" name="doc_quotation" />
             ใบเสนอราคา
           </label>
-          <div class="option-detail" data-detail="doc_quotation">
-            <label class="field-label" for="doc_quotation_date">วันที่</label>
-            <input id="doc_quotation_date" name="doc_quotation_date" type="date" class="input" />
-            <p id="doc_quotation_date_error" class="input-hint input-hint-error"></p>
+          <div class="option-detail section2-option-detail" data-detail="doc_quotation">
+            <div class="field section2-field">
+              <label class="field-label" for="doc_quotation_date">วันที่</label>
+              <div class="field__control section2-field__control">
+                <input
+                  id="doc_quotation_date"
+                  name="doc_quotation_date"
+                  type="date"
+                  class="input section2-input section2-input-date"
+                />
+              </div>
+              <p id="doc_quotation_date_error" class="input-hint input-hint-error"></p>
+            </div>
           </div>
         </div>
 
-        <div class="option-block">
+        <div class="option-block section2-option-block">
           <label class="checkbox-label">
             <input type="checkbox" name="doc_invoice" />
             ใบแจ้งหนี้ / ใบส่งสินค้า
           </label>
-          <div class="option-detail" data-detail="doc_invoice">
-            <label class="field-label" for="doc_invoice_date">วันที่</label>
-            <input id="doc_invoice_date" name="doc_invoice_date" type="date" class="input" />
-            <p id="doc_invoice_date_error" class="input-hint input-hint-error"></p>
+          <div class="option-detail section2-option-detail" data-detail="doc_invoice">
+            <div class="field section2-field">
+              <label class="field-label" for="doc_invoice_date">วันที่</label>
+              <div class="field__control section2-field__control">
+                <input
+                  id="doc_invoice_date"
+                  name="doc_invoice_date"
+                  type="date"
+                  class="input section2-input section2-input-date"
+                />
+              </div>
+              <p id="doc_invoice_date_error" class="input-hint input-hint-error"></p>
+            </div>
           </div>
         </div>
 
-        <div class="option-block">
+        <div class="option-block section2-option-block">
           <label class="checkbox-label">
             <input type="checkbox" name="doc_store" />
             เอกสารร้าน
           </label>
-          <div class="option-detail" data-detail="doc_store">
-            <label class="field-label" for="doc_store_text">โปรดระบุเอกสาร</label>
-            <input id="doc_store_text" name="doc_store_text" type="text" class="input" />
-            <p id="doc_store_text_error" class="input-hint input-hint-error"></p>
+          <div class="option-detail section2-option-detail" data-detail="doc_store">
+            <div class="field section2-field">
+              <label class="field-label" for="doc_store_text">โปรดระบุเอกสาร</label>
+              <div class="field__control section2-field__control">
+                <input
+                  id="doc_store_text"
+                  name="doc_store_text"
+                  type="text"
+                  class="input section2-input section2-input-text"
+                />
+              </div>
+              <p id="doc_store_text_error" class="input-hint input-hint-error"></p>
+            </div>
           </div>
         </div>
 
-        <div class="option-block">
+        <div class="option-block section2-option-block">
           <label class="checkbox-label">
             <input type="checkbox" name="doc_receipt_tax" />
             ใบเสร็จรับเงิน / ใบกำกับภาษี
           </label>
-          <div class="option-detail" data-detail="doc_receipt_tax">
-            <label class="field-label" for="doc_receipt_tax_date">วันที่</label>
-            <input id="doc_receipt_tax_date" name="doc_receipt_tax_date" type="date" class="input" />
-            <p id="doc_receipt_tax_date_error" class="input-hint input-hint-error"></p>
+          <div class="option-detail section2-option-detail" data-detail="doc_receipt_tax">
+            <div class="field section2-field">
+              <label class="field-label" for="doc_receipt_tax_date">วันที่</label>
+              <div class="field__control section2-field__control">
+                <input
+                  id="doc_receipt_tax_date"
+                  name="doc_receipt_tax_date"
+                  type="date"
+                  class="input section2-input section2-input-date"
+                />
+              </div>
+              <p id="doc_receipt_tax_date_error" class="input-hint input-hint-error"></p>
+            </div>
           </div>
         </div>
 
@@ -120,6 +157,7 @@ export function renderCustomerSection2(options) {
   const invoiceErrorEl = rootEl.querySelector("#doc_invoice_date_error");
   const storeErrorEl = rootEl.querySelector("#doc_store_text_error");
   const receiptTaxErrorEl = rootEl.querySelector("#doc_receipt_tax_date_error");
+  ensureLoadingOverlay(rootEl);
 
   let saving = false;
 
@@ -238,6 +276,11 @@ export function renderCustomerSection2(options) {
   function setSavingState(isSaving) {
     saving = isSaving;
     nextButtonEl.textContent = isSaving ? "กำลังบันทึก..." : "ถัดไป";
+    if (isSaving) {
+      showLoading(rootEl, "กำลังบันทึก...");
+    } else {
+      hideLoading(rootEl);
+    }
     renderValidation();
   }
 

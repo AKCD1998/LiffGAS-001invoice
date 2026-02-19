@@ -1,4 +1,6 @@
 import { adminListRequests, getErrorDisplayText } from "../api.js";
+import { asPhoneString, sanitizeTelHref } from "../utils/phone.js";
+import { formatDateTimeCompact } from "./timeFormat.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -36,10 +38,6 @@ function statusClass(status) {
   return "status status-draft";
 }
 
-function normalizeTel(value) {
-  return String(value || "").replace(/[^\d+]/g, "");
-}
-
 function renderRows(items) {
   if (!items || items.length === 0) {
     return `
@@ -53,15 +51,18 @@ function renderRows(items) {
     .map((item) => {
       const progress = normalizePercent(item.progress_percent);
       const status = String(item.status || "").trim() || "draft";
-      const contactCandidate = item.officePhone || item.contactPhone || "";
-      const telHref = normalizeTel(contactCandidate);
+      const contactCandidate = asPhoneString(
+        item.officePhone || item.contactPhone || "",
+        "officePhone",
+      );
+      const telHref = sanitizeTelHref(contactCandidate);
       const contactHtml = telHref
         ? `<a href="tel:${escapeHtml(telHref)}">${displayText(contactCandidate)}</a>`
         : "-";
 
       return `
         <tr>
-          <td>${displayText(item.updatedAt)}</td>
+          <td>${displayText(formatDateTimeCompact(item.updatedAt))}</td>
           <td>${displayText(item.officeName)}</td>
           <td>
             <div class="progress-wrap">

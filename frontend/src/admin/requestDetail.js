@@ -1,4 +1,9 @@
 import { adminGetRequest, getErrorDisplayText } from "../api.js";
+import { asPhoneString, sanitizeTelHref } from "../utils/phone.js";
+import {
+  formatDateCompact,
+  formatDateTimeCompact,
+} from "./timeFormat.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -49,10 +54,6 @@ function toBoolean(value) {
   );
 }
 
-function normalizeTel(raw) {
-  return String(raw || "").replace(/[^\d+]/g, "");
-}
-
 function paymentMethodLabel(method) {
   const value = String(method || "").trim();
   if (value === "cash") {
@@ -86,14 +87,17 @@ function taxFlag(value) {
 
 function buildDocumentDetailRows(item) {
   const rows = [];
+  const quotationDate = formatDateCompact(item.doc_quotation_date);
+  const invoiceDate = formatDateCompact(item.doc_invoice_date);
+  const receiptTaxDate = formatDateCompact(item.doc_receipt_tax_date);
   if (toBoolean(item.doc_quotation)) {
     rows.push(
-      `<li>ใบเสนอราคา - วันที่: ${displayText(item.doc_quotation_date)}</li>`,
+      `<li>ใบเสนอราคา - วันที่: ${displayText(quotationDate)}</li>`,
     );
   }
   if (toBoolean(item.doc_invoice)) {
     rows.push(
-      `<li>ใบแจ้งหนี้ / ใบส่งสินค้า - วันที่: ${displayText(item.doc_invoice_date)}</li>`,
+      `<li>ใบแจ้งหนี้ / ใบส่งสินค้า - วันที่: ${displayText(invoiceDate)}</li>`,
     );
   }
   if (toBoolean(item.doc_store)) {
@@ -103,9 +107,7 @@ function buildDocumentDetailRows(item) {
   }
   if (toBoolean(item.doc_receipt_tax)) {
     rows.push(
-      `<li>ใบเสร็จรับเงิน / ใบกำกับภาษี - วันที่: ${displayText(
-        item.doc_receipt_tax_date,
-      )}</li>`,
+      `<li>ใบเสร็จรับเงิน / ใบกำกับภาษี - วันที่: ${displayText(receiptTaxDate)}</li>`,
     );
   }
   if (rows.length === 0) {
@@ -151,10 +153,10 @@ function setBanner(el, message, type) {
 function renderItem(rootEl, item, requestId, onBack) {
   const progress = normalizePercent(item.progress_percent);
   const status = String(item.status || "").trim() || "draft";
-  const officePhone = String(item.officePhone || "").trim();
-  const contactPhone = String(item.contactPhone || "").trim();
-  const officePhoneHref = normalizeTel(officePhone);
-  const contactPhoneHref = normalizeTel(contactPhone);
+  const officePhone = asPhoneString(item.officePhone, "officePhone");
+  const contactPhone = asPhoneString(item.contactPhone, "contactPhone");
+  const officePhoneHref = sanitizeTelHref(officePhone);
+  const contactPhoneHref = sanitizeTelHref(contactPhone);
   const customerLineUserId = String(item.lineUserId || "").trim();
 
   rootEl.innerHTML = `
@@ -165,7 +167,9 @@ function renderItem(rootEl, item, requestId, onBack) {
       )})</p>
 
       <div class="summary-block">
-        <p><strong>updatedAt:</strong> ${displayText(item.updatedAt)}</p>
+        <p><strong>updatedAt:</strong> ${displayText(
+          formatDateTimeCompact(item.updatedAt),
+        )}</p>
         <p><strong>status:</strong> <span class="${statusClass(status)}">${displayText(
           status,
         )}</span></p>

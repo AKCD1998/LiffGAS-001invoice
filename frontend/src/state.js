@@ -1,3 +1,5 @@
+import { normalizePhoneFields } from "./utils/phone.js";
+
 const appState = {
   draft: null,
   adminAuth: null,
@@ -9,7 +11,7 @@ export function setDraft(request) {
     appState.draft = null;
     return;
   }
-  appState.draft = { ...request };
+  appState.draft = normalizePhoneFields({ ...request });
 }
 
 export function getDraft() {
@@ -26,7 +28,7 @@ export function mergeDraftPatch(patch) {
   if (!appState.draft) {
     appState.draft = {};
   }
-  appState.draft = { ...appState.draft, ...safePatch };
+  appState.draft = normalizePhoneFields({ ...appState.draft, ...safePatch });
   return { ...appState.draft };
 }
 

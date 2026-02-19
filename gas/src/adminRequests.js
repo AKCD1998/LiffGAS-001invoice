@@ -1,5 +1,13 @@
 const ADMIN_LIST_DEFAULT_LIMIT_ = 50;
 const ADMIN_LIST_MAX_LIMIT_ = 200;
+const ADMIN_FORCE_TEXT_FIELDS_ = Object.freeze({
+  requestId: true,
+  lineUserId: true,
+  taxId13: true,
+  officePhone: true,
+  contactPhone: true,
+  contactLineId: true,
+});
 
 function adminListRequests_(payload) {
   const input = isPlainObject_(payload) ? payload : {};
@@ -114,6 +122,13 @@ function mapAdminRequestRow_(headers, rowValues) {
       return;
     }
     const value = rowValues[index];
+    if (ADMIN_FORCE_TEXT_FIELDS_[key]) {
+      mapped[key] =
+        value === null || typeof value === "undefined"
+          ? ""
+          : String(value).trim();
+      return;
+    }
     if (isAdminBooleanField_(key)) {
       mapped[key] = toBoolean_(value);
       return;

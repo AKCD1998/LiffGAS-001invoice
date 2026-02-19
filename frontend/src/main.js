@@ -103,6 +103,69 @@ function mergeResultToDraft(result, sectionData) {
   mergeDraftPatch(patch);
 }
 
+function adminAbsoluteUrl() {
+  const base = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+  return `${base}#${ROUTES.ADMIN}`;
+}
+
+function getLiffSdk() {
+  return typeof window !== "undefined" ? window.liff : null;
+}
+
+function isInLiffClient() {
+  const liffSdk = getLiffSdk();
+  if (!liffSdk || typeof liffSdk.isInClient !== "function") {
+    return false;
+  }
+  try {
+    return !!liffSdk.isInClient();
+  } catch (error) {
+    return false;
+  }
+}
+
+function isLikelyLineInAppBrowser() {
+  const ua = String(window.navigator?.userAgent || "");
+  return /Line\//i.test(ua);
+}
+
+function openExternalFallback(url) {
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) {
+    window.location.href = url;
+  }
+}
+
+function openAdminEntry() {
+  const targetUrl = adminAbsoluteUrl();
+  const inLiffClient = isInLiffClient();
+  const shouldOpenExternal = inLiffClient || isLikelyLineInAppBrowser();
+
+  if (!shouldOpenExternal) {
+    navigate(ROUTES.ADMIN);
+    return;
+  }
+
+  if (typeof window.alert === "function") {
+    window.alert("กำลังเปิดในเบราว์เซอร์เพื่อเข้าสู่ระบบผู้ดูแล");
+  }
+
+  const liffSdk = getLiffSdk();
+  if (inLiffClient && liffSdk && typeof liffSdk.openWindow === "function") {
+    try {
+      liffSdk.openWindow({
+        url: targetUrl,
+        external: true,
+      });
+      return;
+    } catch (error) {
+      console.warn("LIFF openWindow failed, fallback to window.open", error);
+    }
+  }
+
+  openExternalFallback(targetUrl);
+}
+
 function renderHome() {
   app.innerHTML = `
     <main class="card">
@@ -111,13 +174,20 @@ function renderHome() {
 
       <div class="button-row">
         <button class="btn btn-primary" data-route="${ROUTES.CUSTOMER}">เป็นลูกค้า</button>
-        <button class="btn btn-secondary" data-route="${ROUTES.ADMIN}">เป็นผู้ดูแลระบบ</button>
+        <button id="openAdminExternalButton" class="btn btn-secondary" type="button">เป็นผู้ดูแลระบบ</button>
       </div>
 
       <p class="meta">lineUserId: ${lineContext.lineUserId ?? "กำลังโหลด..."}</p>
       <p class="meta">source: ${lineContext.source}</p>
     </main>
   `;
+
+  const openAdminButton = app.querySelector("#openAdminExternalButton");
+  if (openAdminButton) {
+    openAdminButton.addEventListener("click", () => {
+      openAdminEntry();
+    });
+  }
 }
 
 function ensureEnvFooter() {
