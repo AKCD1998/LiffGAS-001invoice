@@ -433,6 +433,10 @@ body {
   z-index: 12000;
 }
 
+.loading-overlay.hidden {
+  display: none;
+}
+
 .loading-overlay__panel {
   width: min(300px, 92vw);
   border-radius: 14px;
