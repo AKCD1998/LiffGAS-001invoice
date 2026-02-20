@@ -1,6 +1,11 @@
 import { adminGetRequest, getErrorDisplayText } from "../api.js";
 import { asPhoneString, sanitizeTelHref } from "../utils/phone.js";
 import {
+  ensureLoadingOverlay,
+  hideLoading,
+  showLoading,
+} from "../customer/uiLoading.js";
+import {
   formatDateCompact,
   formatDateTimeCompact,
 } from "./timeFormat.js";
@@ -183,7 +188,7 @@ function renderItem(rootEl, item, requestId, onBack) {
         <h2>ช่องทางติดต่อ</h2>
         <p><strong>officePhone:</strong> ${
           officePhoneHref
-            ? `<a href="tel:${escapeHtml(officePhoneHref)}">โทร ${displayText(
+            ? `<a href="tel:${escapeHtml(officePhoneHref)}">${displayText(
                 officePhone,
                 "",
               )}</a>`
@@ -191,7 +196,7 @@ function renderItem(rootEl, item, requestId, onBack) {
         }</p>
         <p><strong>contactPhone:</strong> ${
           contactPhoneHref
-            ? `<a href="tel:${escapeHtml(contactPhoneHref)}">โทร ${displayText(
+            ? `<a href="tel:${escapeHtml(contactPhoneHref)}">${displayText(
                 contactPhone,
                 "",
               )}</a>`
@@ -294,6 +299,7 @@ export function renderAdminRequestDetail(options) {
       <div id="adminDetailToast" class="detail-toast hidden"></div>
     </main>
   `;
+  ensureLoadingOverlay(rootEl);
 
   const bannerEl = rootEl.querySelector("#adminDetailBanner");
   const backButton = rootEl.querySelector("#adminDetailBackButton");
@@ -311,15 +317,18 @@ export function renderAdminRequestDetail(options) {
   });
 
   if (!lineUserId || !adminToken) {
+    hideLoading(rootEl);
     setBanner(bannerEl, "กรุณาเข้าสู่ระบบใหม่", "error");
     loginButton.classList.remove("hidden");
     return;
   }
   if (!requestId) {
+    hideLoading(rootEl);
     setBanner(bannerEl, "ไม่พบคำขอ", "error");
     return;
   }
 
+  showLoading(rootEl, "กำลังโหลดข้อมูล...");
   adminGetRequest(lineUserId, adminToken, requestId)
     .then((result) => {
       const item = result?.item;
@@ -335,5 +344,8 @@ export function renderAdminRequestDetail(options) {
       if (String(error?.code || "").toUpperCase() === "NOT_AUTHORIZED") {
         loginButton.classList.remove("hidden");
       }
+    })
+    .finally(() => {
+      hideLoading(rootEl);
     });
 }

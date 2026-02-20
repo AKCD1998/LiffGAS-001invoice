@@ -45,6 +45,7 @@ export function ensureLoadingOverlay(rootEl) {
   overlayEl.className = "loading-overlay hidden";
   overlayEl.setAttribute("data-loading-overlay", "true");
   overlayEl.setAttribute("aria-hidden", "true");
+  overlayEl.style.display = "none";
   overlayEl.innerHTML = `
     <div class="loading-overlay__panel" role="status" aria-live="polite">
       <div class="loading-spinner" aria-hidden="true"></div>
@@ -67,6 +68,7 @@ export function showLoading(rootEl, text) {
 
   setOverlayText(overlayEl, text || "กำลังบันทึก...");
   overlayEl.classList.remove("hidden");
+  overlayEl.style.display = "flex";
   overlayEl.setAttribute("aria-hidden", "false");
   disableInteractiveElements(rootEl);
 }
@@ -79,6 +81,7 @@ export function hideLoading(rootEl) {
   const overlayEl = rootEl.querySelector(OVERLAY_SELECTOR);
   if (overlayEl) {
     overlayEl.classList.add("hidden");
+    overlayEl.style.display = "none";
     overlayEl.setAttribute("aria-hidden", "true");
   }
   restoreInteractiveElements(rootEl);

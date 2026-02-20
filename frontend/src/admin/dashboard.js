@@ -1,6 +1,11 @@
 import { adminListRequests, getErrorDisplayText } from "../api.js";
 import { asPhoneString, sanitizeTelHref } from "../utils/phone.js";
 import { formatDateTimeCompact } from "./timeFormat.js";
+import {
+  ensureLoadingOverlay,
+  hideLoading,
+  showLoading,
+} from "../customer/uiLoading.js";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -175,6 +180,7 @@ export function renderAdminDashboard(options) {
       <p class="meta">admin: ${displayText(adminAuth?.email || "")}</p>
     </main>
   `;
+  ensureLoadingOverlay(rootEl);
 
   const bannerEl = rootEl.querySelector("#adminDashboardBanner");
   const tableBodyEl = rootEl.querySelector("#adminTableBody");
@@ -215,6 +221,7 @@ export function renderAdminDashboard(options) {
     }
     state.loading = true;
     setBanner(bannerEl, "กำลังโหลดข้อมูล...", "warning");
+    showLoading(rootEl, "กำลังโหลดข้อมูล...");
     refreshButtonEl.disabled = true;
 
     try {
@@ -235,10 +242,12 @@ export function renderAdminDashboard(options) {
       applyFilter();
     } finally {
       state.loading = false;
+      hideLoading(rootEl);
       refreshButtonEl.disabled = false;
     }
   }
 
+  hideLoading(rootEl);
   if (!adminAuth || !adminAuth.isAdmin) {
     setBanner(bannerEl, "กรุณาเข้าสู่ระบบผู้ดูแลก่อน", "error");
     tableBodyEl.innerHTML = `<tr><td colspan="7" class="empty-cell">ไม่มีสิทธิ์เข้าถึง</td></tr>`;

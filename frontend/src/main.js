@@ -173,8 +173,8 @@ function renderHome() {
       <p class="subtitle">เลือกโหมดการใช้งาน</p>
 
       <div class="button-row">
-        <button class="btn btn-primary" data-route="${ROUTES.CUSTOMER}">เป็นลูกค้า</button>
-        <button id="openAdminExternalButton" class="btn btn-secondary" type="button">เป็นผู้ดูแลระบบ</button>
+        <button class="btn btn-primary" data-route="${ROUTES.CUSTOMER}">ลูกค้า</button>
+        <button id="openAdminExternalButton" class="btn btn-secondary" type="button">ผู้ดูแล (เปิดในเบราว์เซอร์คอมพิวเตอร์)</button>
       </div>
 
       <p class="meta">lineUserId: ${lineContext.lineUserId ?? "กำลังโหลด..."}</p>
