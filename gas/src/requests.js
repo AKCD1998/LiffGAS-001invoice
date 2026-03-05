@@ -4,6 +4,8 @@ const REQUEST_SECTION_FIELD_MAP_ = Object.freeze({
     "taxInvoiceAddress",
     "taxId13",
     "officePhone",
+    "contactLineId",
+    "contactPhone",
     "taxId_format_ok",
     "taxId_checksum_ok",
     "taxId_verify_status",

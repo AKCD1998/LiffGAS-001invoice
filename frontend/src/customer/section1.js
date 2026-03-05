@@ -69,6 +69,14 @@ export function renderCustomerSection1(options) {
         <label class="field-label" for="officePhone">เบอร์โทรสำนักงาน</label>
         <input id="officePhone" name="officePhone" class="input" type="tel" required />
 
+        <label class="field-label" for="contactLineId">ไลน์ ID</label>
+        <input id="contactLineId" name="contactLineId" type="text" class="input" />
+
+        <label class="field-label" for="contactPhone">เบอร์โทรศัพท์</label>
+        <input id="contactPhone" name="contactPhone" type="tel" class="input" />
+
+        <p id="contactError" class="input-hint input-hint-error"></p>
+
         <div class="button-row">
           <button type="button" id="backButton" class="btn btn-ghost">กลับ</button>
           <button type="submit" id="nextButton" class="btn btn-primary" disabled>ถัดไป</button>
@@ -85,6 +93,9 @@ export function renderCustomerSection1(options) {
   const taxInvoiceAddressInputEl = rootEl.querySelector("#taxInvoiceAddress");
   const taxIdInputEl = rootEl.querySelector("#taxId13");
   const officePhoneInputEl = rootEl.querySelector("#officePhone");
+  const contactLineIdInputEl = rootEl.querySelector("#contactLineId");
+  const contactPhoneInputEl = rootEl.querySelector("#contactPhone");
+  const contactErrorEl = rootEl.querySelector("#contactError");
   const taxIdMessageEl = rootEl.querySelector("#taxIdMessage");
   const nextButtonEl = rootEl.querySelector("#nextButton");
   const backButtonEl = rootEl.querySelector("#backButton");
@@ -118,6 +129,8 @@ export function renderCustomerSection1(options) {
   taxInvoiceAddressInputEl.value = String(initialData.taxInvoiceAddress || "");
   taxIdInputEl.value = String(initialData.taxId13 || "").replace(/\D/g, "").slice(0, 13);
   officePhoneInputEl.value = asPhoneString(initialData.officePhone, "officePhone");
+  contactLineIdInputEl.value = String(initialData.contactLineId || "");
+  contactPhoneInputEl.value = asPhoneString(initialData.contactPhone, "contactPhone");
   taxIdTouched = taxIdInputEl.value !== "";
 
   if (initialNotice) {
@@ -132,6 +145,12 @@ export function renderCustomerSection1(options) {
       fieldValueById(formEl, "officePhone"),
       "officePhone",
     );
+    const contactLineId = fieldValueById(formEl, "contactLineId");
+    const contactPhone = asPhoneString(
+      fieldValueById(formEl, "contactPhone"),
+      "contactPhone",
+    );
+    const hasAnyContact = contactLineId !== "" || contactPhone !== "";
     const taxValidation = getTaxIdValidation(taxId13);
     const allRequiredFilled =
       officeName !== "" &&
@@ -141,6 +160,7 @@ export function renderCustomerSection1(options) {
 
     const canSubmit =
       allRequiredFilled &&
+      hasAnyContact &&
       taxValidation.taxIdFormatOk &&
       taxValidation.taxIdChecksumOk;
 
@@ -148,9 +168,14 @@ export function renderCustomerSection1(options) {
       officeName,
       taxInvoiceAddress,
       officePhone,
+      contactLineId,
+      contactPhone,
       taxId13: taxValidation.normalized,
       taxIdFormatOk: taxValidation.taxIdFormatOk,
       taxIdChecksumOk: taxValidation.taxIdChecksumOk,
+      contactError: hasAnyContact
+        ? ""
+        : "กรุณาระบุช่องทางติดต่ออย่างน้อย 1 อย่าง",
       canSubmit,
     };
   }
@@ -172,7 +197,31 @@ export function renderCustomerSection1(options) {
       taxIdMessageEl.className = "input-hint";
     }
 
+    contactErrorEl.textContent = formState.contactError;
     nextButtonEl.disabled = !formState.canSubmit || saving;
+  }
+
+  function assertDevContactPayloadKeys(payloadData) {
+    const host =
+      typeof window !== "undefined"
+        ? String(window.location?.hostname || "").trim().toLowerCase()
+        : "";
+    const isLocalDev = host === "localhost" || host === "127.0.0.1";
+    if (
+      !isLocalDev ||
+      typeof console === "undefined" ||
+      typeof console.assert !== "function"
+    ) {
+      return;
+    }
+    console.assert(
+      Object.prototype.hasOwnProperty.call(payloadData, "contactLineId"),
+      "[section1] payload.data is missing contactLineId",
+    );
+    console.assert(
+      Object.prototype.hasOwnProperty.call(payloadData, "contactPhone"),
+      "[section1] payload.data is missing contactPhone",
+    );
   }
 
   function setSavingState(isSaving) {
@@ -227,6 +276,8 @@ export function renderCustomerSection1(options) {
           taxInvoiceAddress: formState.taxInvoiceAddress,
           taxId13: formState.taxId13,
           officePhone: formState.officePhone,
+          contactLineId: formState.contactLineId,
+          contactPhone: formState.contactPhone,
           taxId_format_ok: formState.taxIdFormatOk,
           taxId_checksum_ok: formState.taxIdChecksumOk,
           taxId_verify_status: "not_checked",
@@ -234,6 +285,7 @@ export function renderCustomerSection1(options) {
         },
         clientTs: new Date().toISOString(),
       };
+      assertDevContactPayloadKeys(payload.data);
 
       const result = await saveSection(payload);
       const progressPercent =

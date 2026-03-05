@@ -1,11 +1,5 @@
 import { getErrorDisplayText, saveSection } from "../api.js";
-import { asPhoneString } from "../utils/phone.js";
 import { ensureLoadingOverlay, hideLoading, showLoading } from "./uiLoading.js";
-
-function textValue(form, fieldId) {
-  const input = form.querySelector(`[name="${fieldId}"]`);
-  return input ? String(input.value || "").trim() : "";
-}
 
 export function renderCustomerSection5(options) {
   const rootEl = options.rootEl;
@@ -13,15 +7,11 @@ export function renderCustomerSection5(options) {
   const onBack = options.onBack;
   const onSaved = options.onSaved;
   const lastSaved = options.lastSaved || null;
-  const initialData =
-    options.initialData && typeof options.initialData === "object"
-      ? options.initialData
-      : {};
 
   rootEl.innerHTML = `
     <main class="card">
-      <h1 class="title">ข้อมูลติดต่อ (ส่วนที่ 5)</h1>
-      <p class="subtitle">ระบุช่องทางติดต่ออย่างน้อย 1 ช่องทาง</p>
+      <h1 class="title">ยืนยันข้อมูล (ส่วนที่ 5)</h1>
+      <p class="subtitle">ตรวจสอบความพร้อมก่อนบันทึกและจบ</p>
 
       <div id="section5-warning" class="banner banner-warning hidden"></div>
       <div id="section5-success" class="banner banner-success hidden"></div>
@@ -29,14 +19,6 @@ export function renderCustomerSection5(options) {
       <div id="section5-error" class="banner banner-error hidden"></div>
 
       <form id="section5-form" class="form-grid" novalidate>
-        <label class="field-label" for="contactLineId">ไลน์ ID</label>
-        <input id="contactLineId" name="contactLineId" type="text" class="input" />
-
-        <label class="field-label" for="contactPhone">เบอร์โทรศัพท์</label>
-        <input id="contactPhone" name="contactPhone" type="tel" class="input" />
-
-        <p id="contactError" class="input-hint input-hint-error"></p>
-
         <div class="message-box">
           หากกรอกเรียบร้อยแล้ว รบกวนแจ้งกลับสักนิดนะคะ ขอบคุณค่ะ
         </div>
@@ -59,13 +41,7 @@ export function renderCustomerSection5(options) {
   const successEl = rootEl.querySelector("#section5-success");
   const completeEl = rootEl.querySelector("#section5-complete");
   const errorEl = rootEl.querySelector("#section5-error");
-  const contactErrorEl = rootEl.querySelector("#contactError");
-  const contactLineIdEl = rootEl.querySelector('[name="contactLineId"]');
-  const contactPhoneEl = rootEl.querySelector('[name="contactPhone"]');
   ensureLoadingOverlay(rootEl);
-
-  contactLineIdEl.value = String(initialData.contactLineId || "");
-  contactPhoneEl.value = asPhoneString(initialData.contactPhone, "contactPhone");
 
   let saving = false;
 
@@ -88,27 +64,8 @@ export function renderCustomerSection5(options) {
     showBanner(errorEl, "");
   }
 
-  function collectState() {
-    const contactLineId = textValue(formEl, "contactLineId");
-    const contactPhone = asPhoneString(
-      textValue(formEl, "contactPhone"),
-      "contactPhone",
-    );
-    const hasAnyContact = contactLineId !== "" || contactPhone !== "";
-    return {
-      contactLineId,
-      contactPhone,
-      canSubmit: hasAnyContact,
-      error: hasAnyContact
-        ? ""
-        : "กรุณาระบุช่องทางติดต่ออย่างน้อย 1 อย่าง",
-    };
-  }
-
   function renderValidation() {
-    const state = collectState();
-    contactErrorEl.textContent = state.error;
-    nextButtonEl.disabled = !state.canSubmit || saving;
+    nextButtonEl.disabled = saving;
   }
 
   function setSavingState(isSaving) {
@@ -122,8 +79,6 @@ export function renderCustomerSection5(options) {
     renderValidation();
   }
 
-  formEl.addEventListener("input", renderValidation);
-
   backButtonEl.addEventListener("click", () => {
     if (typeof onBack === "function") {
       onBack();
@@ -133,9 +88,7 @@ export function renderCustomerSection5(options) {
   formEl.addEventListener("submit", async (event) => {
     event.preventDefault();
     renderValidation();
-
-    const state = collectState();
-    if (!state.canSubmit || saving) {
+    if (saving) {
       return;
     }
 
@@ -145,10 +98,7 @@ export function renderCustomerSection5(options) {
     const payload = {
       lineUserId: lineUserId,
       section: 5,
-      data: {
-        contactLineId: state.contactLineId,
-        contactPhone: state.contactPhone,
-      },
+      data: {},
       clientTs: new Date().toISOString(),
     };
 
